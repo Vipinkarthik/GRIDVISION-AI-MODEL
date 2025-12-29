@@ -1,5 +1,4 @@
 from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from utils.ocr import extract_meter_reading
 from utils.classifier import validate_image
@@ -8,17 +7,28 @@ import traceback
 
 app = FastAPI(title="EB Meter AI Validation Service")
 
-# Enable CORS for all origins (required for frontend communication)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 print("✅ CORS middleware enabled - Frontend can now communicate with AI service")
 
+
+# 🔹 HEALTH CHECK (BROWSER FRIENDLY)
+@app.get("/")
+def health_check():
+    return {
+        "status": "OK",
+        "service": "EB Meter AI Validation Service",
+        "message": "Service is running successfully"
+    }
+
+
+# 🔹 MAIN API
 @app.post("/validate-meter")
 async def validate_meter(
     image: UploadFile = File(...),
@@ -31,36 +41,23 @@ async def validate_meter(
         ocr_reading = None
         try:
             ocr_reading = extract_meter_reading(image_stream)
-            print(f"✅ OCR extracted: '{ocr_reading}' (type: {type(ocr_reading).__name__}, length: {len(str(ocr_reading))})")
         except Exception as e:
-            print(f"❌ OCR Error: {str(e)}")
             print(traceback.format_exc())
-            ocr_reading = None
 
         image_stream.seek(0)
-        is_valid_image = True
+
         try:
             is_valid_image = validate_image(image_stream)
-            print(f"✅ Image validation result: {is_valid_image}")
-        except Exception as e:
-            print(f"⚠️ Validation Error: {str(e)}")
-            print(traceback.format_exc())
-            # Don't fail on validation error - just accept the image
+        except:
             is_valid_image = True
 
-        # Prepare response with extracted reading
-        meter_reading_value = str(ocr_reading).strip() if ocr_reading else ""
-        print(f"📊 Final meter_reading for response: '{meter_reading_value}'")
-        
-        response_data = {
+        return {
             "status": "VALID",
-            "meter_reading": meter_reading_value,
+            "meter_reading": str(ocr_reading).strip() if ocr_reading else "",
             "user_reading": str(user_reading),
             "image_valid": is_valid_image
         }
-        
-        print(f"📤 Sending response: {response_data}")
-        return response_data
-        
+
     except Exception as e:
-        print(f"❌ Endpoint Error: {str(e)}")
+        print(traceback.format_exc())
+        return {"status": "ERROR"}
