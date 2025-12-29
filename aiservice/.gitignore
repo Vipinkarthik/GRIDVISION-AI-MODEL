@@ -1,0 +1,52 @@
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Environment variables
+.env
+
+# Model files (AI models)
+models/*.h5
+models/*.pb
+models/*.onnx
+
+# Uploaded / temporary images
+uploads/
+temp/
+*.jpg
+*.jpeg
+*.png
+
+# Logs
+*.log
+
+# FastAPI / Uvicorn
+*.pid
+
+# TensorFlow / Keras
+.keras/
+tensorflow_logs/
+checkpoints/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Build / cache
+dist/
+build/
+.eggs/
+*.egg-info/
